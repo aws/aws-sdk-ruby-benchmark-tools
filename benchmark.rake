@@ -56,16 +56,11 @@ namespace :benchmark do
     require 'aws-sdk-s3'
     require 'securerandom'
 
-    folder = event_type
-    folder += "/#{ENV.fetch('GH_REF', nil)}" if event_type != 'release'
-    time = Time.now.strftime('%Y-%m-%d')
-    key = "#{folder}/#{time}/benchmark_#{SecureRandom.uuid}.json"
-
     puts "Uploading report to: #{key}"
     client = Aws::S3::Client.new
     client.put_object(
-      bucket: 'aws-sdk-ruby-performance-benchmark-archive',
-      key: key,
+      bucket: benchmark_bucket,
+      key: benchmark_key,
       body: File.read('benchmark_report.json')
     )
     puts 'Upload complete'
