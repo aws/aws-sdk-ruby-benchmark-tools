@@ -10,23 +10,12 @@ namespace :benchmark do
     require 'json'
     require 'memory_profiler' # MemoryProfiler does not work for JRuby
     require 'tmpdir'
-    require_relative 'benchmark'
-
-    # # Modify load path to include all of our gems from local repo
-    # Dir.glob("gems/*/lib") do |gem_path|
-    #   $LOAD_PATH.unshift(File.expand_path(gem_path))
-    # end
-
-    # # Modify load path to include codegen gems from build directories
-    # Dir.glob('codegen/*/build/smithyprojections/**/ruby-codegen/*/lib') do |gem_path|
-    #   $LOAD_PATH.unshift(File.expand_path(gem_path))
-    # end
 
     report_data = Benchmark.initialize_report_data
     benchmark_data = report_data['benchmark']
 
     puts 'Benchmarking gem size/requires/client initialization'
-    Dir.mktmpdir('ruby-sdk-benchmark') do |_tmpdir|
+    Dir.mktmpdir('benchmark-run') do |_tmpdir|
       Benchmark::Gem.descendants.each do |benchmark_gem_klass|
         benchmark_gem = benchmark_gem_klass.new
         puts "\tBenchmarking #{benchmark_gem.gem_name}"
