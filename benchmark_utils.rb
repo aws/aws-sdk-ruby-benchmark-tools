@@ -3,10 +3,12 @@
 # Used to determine the bucket to store the benchmark results in S3.
 def benchmark_bucket
   case ENV.fetch('GH_REPO', nil)
-  when 'smithy-lang/smithy-ruby'
-    'hearth-performance-benchmark-archive'
   when 'aws/aws-sdk-ruby'
-    'aws-sdk-ruby-performance-benchmark-archive'
+    'aws-sdk-ruby-v3-benchmarks'
+  when 'aws/aws-sdk-ruby-staging'
+    'aws-sdk-ruby-staging-v3-benchmarks'
+  when 'smithy-lang/smithy-ruby'
+    'hearth-benchmarks'
   else
     raise 'Unknown repository'
   end

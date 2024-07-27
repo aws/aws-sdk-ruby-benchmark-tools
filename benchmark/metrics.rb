@@ -52,10 +52,12 @@ module Benchmark
 
       def metric_namespace
         case ENV.fetch('GH_REPO', nil)
-        when 'smithy-lang/smithy-ruby'
-          'hearth-performance'
         when 'aws/aws-sdk-ruby'
           'aws-sdk-ruby-v3-performance'
+        when 'aws/aws-sdk-ruby-staging'
+          'aws-sdk-ruby-v3-staging-performance'
+        when 'smithy-lang/smithy-ruby'
+          'hearth-performance'
         else
           raise 'Unknown repository'
         end
