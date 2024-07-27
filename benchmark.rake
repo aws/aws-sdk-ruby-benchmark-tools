@@ -60,11 +60,13 @@ namespace :benchmark do
     require 'aws-sdk-s3'
     require 'securerandom'
 
-    puts "Uploading report to: #{key}"
+    bucket = benchmark_bucket
+    key = benchmark_key
+    puts "Uploading report to: #{bucket}/#{key}"
     client = Aws::S3::Client.new
     client.put_object(
-      bucket: benchmark_bucket,
-      key: benchmark_key,
+      bucket: bucket,
+      key: key,
       body: File.read('benchmark_report.json')
     )
     puts 'Upload complete'
