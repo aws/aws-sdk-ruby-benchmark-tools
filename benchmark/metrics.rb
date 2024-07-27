@@ -11,7 +11,7 @@ module Benchmark
       metric_data = {
         metric_name: metric_name,
         timestamp: timestamp,
-        unit: metric_unit,
+        unit: metric_unit(metric_name),
         dimensions: dims.map { |k, v| { name: k.to_s, value: v } }
       }
 
