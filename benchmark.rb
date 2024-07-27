@@ -207,4 +207,4 @@ module Benchmark
 end
 
 # require all gem benchmarks
-Dir[File.join(__dir__, 'gems', '*.rb')].each { |file| require file }
+Dir[File.join(__dir__, '../gems', '*.rb')].each { |file| require file }

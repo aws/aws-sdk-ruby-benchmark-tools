@@ -10,6 +10,7 @@ namespace :benchmark do
     require 'json'
     require 'memory_profiler' # MemoryProfiler does not work for JRuby
     require 'tmpdir'
+    require_relative 'benchmark'
 
     # # Modify load path to include all of our gems from local repo
     # Dir.glob("gems/*/lib") do |gem_path|
