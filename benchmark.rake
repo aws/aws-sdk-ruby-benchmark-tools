@@ -78,7 +78,7 @@ namespace :benchmark do
     puts 'TASK START: benchmark:put-metrics'
 
     require 'aws-sdk-cloudwatch'
-    require_relative 'metrics'
+    require_relative 'benchmark/metrics'
 
     report = JSON.parse(File.read('benchmark_report.json'))
     ruby_version = report['ruby_version'].split('.').first(2).join('.')
