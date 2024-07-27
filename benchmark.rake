@@ -15,7 +15,7 @@ namespace :benchmark do
     # rubocop:enable Lint/RequireRelativeSelfPath
 
     # Require all benchmark gems
-    Dir[File.join(__dir__, '..', 'gems', '*.rb')]
+    Dir[File.join(__dir__, '..', 'gems', '*.rb')].sort
       .each { |file| require file }
 
     report_data = Benchmark.initialize_report_data
