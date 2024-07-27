@@ -10,6 +10,9 @@ namespace :benchmark do
     require 'json'
     require 'memory_profiler' # MemoryProfiler does not work for JRuby
     require 'tmpdir'
+    # rubocop:disable Lint/RequireRelativeSelfPath
+    require_relative 'benchmark'
+    # rubocop:enable Lint/RequireRelativeSelfPath
 
     report_data = Benchmark.initialize_report_data
     benchmark_data = report_data['benchmark']
