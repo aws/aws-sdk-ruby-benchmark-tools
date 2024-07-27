@@ -19,6 +19,9 @@ module Benchmark
     # The name of the gem (eg: aws-sdk-s3).
     def gem_name; end
 
+    # The name of the gem directory (eg: gems/aws-sdk-s3).
+    def gem_dir; end
+
     # The module that contains the client (eg Aws::S3).
     def client_module_name; end
 
@@ -39,7 +42,7 @@ module Benchmark
     # Done within a temp directory to prevent accumulation of .gem artifacts.
     def benchmark_gem_size(report_data)
       Dir.mktmpdir('benchmark-gem-size') do |tmpdir|
-        Dir.chdir("gems/#{gem_name}") do
+        Dir.chdir(gem_dir) do
           `gem build #{gem_name}.gemspec -o #{tmpdir}/#{gem_name}.gem`
           report_data['gem_size_kb'] =
             File.size("#{tmpdir}/#{gem_name}.gem") / 1024.0
