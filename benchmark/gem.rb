@@ -86,7 +86,7 @@ module Benchmark
 
       report_data.merge!(Benchmark.fork_run do |out|
         require gem_name
-        client_klass = Aws.const_get(client_module_name).const_get(:Client)
+        client_klass = Kernel.const_get(client_module_name).const_get(:Client)
         unless defined?(JRUBY_VERSION)
           r = ::MemoryProfiler.report { client_klass.new(stub_responses: true) }
           out[:client_mem_retained_kb] = r.total_retained_memsize / 1024.0
