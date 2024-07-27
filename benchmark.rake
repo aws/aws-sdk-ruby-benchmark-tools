@@ -64,10 +64,8 @@ namespace :benchmark do
     require 'aws-sdk-s3'
     require 'securerandom'
 
-    ref = ENV.fetch('GH_REF', nil)
     folder = event_type
-    folder += "/#{ref}" if event_type != 'release'
-
+    folder += "/#{ENV.fetch('GH_REF', nil)}" if event_type != 'release'
     time = Time.now.strftime('%Y-%m-%d')
     key = "#{folder}/#{time}/benchmark_#{SecureRandom.uuid}.json"
 
@@ -75,7 +73,7 @@ namespace :benchmark do
     client = Aws::S3::Client.new
     client.put_object(
       bucket: 'aws-sdk-ruby-performance-benchmark-archive',
-      key:,
+      key: key,
       body: File.read('benchmark_report.json')
     )
     puts 'Upload complete'
@@ -97,7 +95,7 @@ namespace :benchmark do
     # common dimensions
     report_dims = {
       event: event_type,
-      target:,
+      target: target,
       os: report['os'],
       cpu: report['cpu'],
       env: report['execution_env']
@@ -106,13 +104,13 @@ namespace :benchmark do
     puts 'Uploading benchmarking metrics'
     client = Aws::CloudWatch::Client.new
     report['benchmark'].each do |gem_name, gem_data|
-      gem_data.each do |k, v|
+      gem_data.each do |metric_name, metric_value|
         Benchmark::Metrics.put_metric(
-          client:,
+          client: client,
           dims: report_dims.merge(gem: gem_name),
           timestamp: report['timestamp'] || Time.now,
-          metric_name: k,
-          value: v
+          metric_name: metric_name,
+          metric_value: metric_value
         )
       end
     end
