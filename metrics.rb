@@ -3,7 +3,7 @@
 module Benchmark
   module Metrics
     # Put metrics into CloudWatch
-    def put_metric(client:, dims:, timestamp:, metric_name:, metric_value:)
+    def self.put_metric(client:, dims:, timestamp:, metric_name:, metric_value:)
       return unless metric_value.is_a?(Numeric) || metric_value.is_a?(Array)
 
       # Attempt to determine unit

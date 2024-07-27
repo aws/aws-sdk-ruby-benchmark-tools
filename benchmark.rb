@@ -73,7 +73,7 @@ module Benchmark
 
     report_data['cpu'] = RbConfig::CONFIG['host_cpu']
     report_data['os'] = host_os
-    report_data['execution_env'] = ENV['AWS_EXECUTION_ENV'] || ENV['EXECUTION_ENV'] || 'unknown'
+    report_data['execution_env'] = ENV['EXECUTION_ENV'] || 'unknown'
 
     report_data['timestamp'] = Time.now.to_i
 
