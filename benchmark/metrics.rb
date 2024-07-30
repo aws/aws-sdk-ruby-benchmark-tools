@@ -58,6 +58,8 @@ module Benchmark
           'aws-sdk-ruby-v3-staging-performance'
         when 'smithy-lang/smithy-ruby'
           'hearth-performance'
+        when 'alextwoods/aws-sdk-ruby-v4' # temporary
+          'aws-sdk-ruby-v4-performance'
         else
           raise 'Unknown repository'
         end

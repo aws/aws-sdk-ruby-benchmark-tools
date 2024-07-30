@@ -9,6 +9,8 @@ def benchmark_bucket
     'aws-sdk-ruby-staging-v3-benchmarks'
   when 'smithy-lang/smithy-ruby'
     'hearth-benchmarks'
+  when 'alextwoods/aws-sdk-ruby-v4' # temporary
+    'aws-sdk-ruby-v4-benchmarks'
   else
     raise 'Unknown repository'
   end
