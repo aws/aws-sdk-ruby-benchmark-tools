@@ -1,17 +1,7 @@
-## My Project
+## Shared benchmarking tools for AWS SDK for Ruby related gems
 
-TODO: Fill this README out!
-
-Be sure to:
-
-* Change the title in this README
-* Edit your repository description on GitHub
-
-## Security
-
-See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
+Common benchmark tasks intended to be included as a submodule.
 
 ## License
 
 This project is licensed under the Apache-2.0 License.
-
