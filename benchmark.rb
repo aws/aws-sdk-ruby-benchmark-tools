@@ -27,7 +27,6 @@ module Benchmark
   # Run a block in a fork and returns the data from it
   # the block must take a single argument and will be called with an empty hash
   # any data that should be communicated back to the parent process can be written to that hash
-  # rubocop:disable Metrics/MethodLength
   def self.fork_run(&block)
     # fork is not supported in JRuby, for now, just run this in the same process
     # data collected will not be as useful, but still valid for relative comparisons over time
@@ -50,7 +49,6 @@ module Benchmark
     rd.close
     h
   end
-  # rubocop:enable Metrics/MethodLength
 
   def self.host_os
     case RbConfig::CONFIG['host_os']
@@ -65,8 +63,6 @@ module Benchmark
     end
   end
 
-  # rubocop:disable Metrics/MethodLength
-  # rubocop:disable Metrics/AbcSize
   def self.initialize_report_data
     report_data = { 'version' => '1.0' }
     begin
@@ -87,6 +83,4 @@ module Benchmark
     report_data['benchmark'] = {}
     report_data
   end
-  # rubocop:enable Metrics/MethodLength
-  # rubocop:enable Metrics/AbcSize
 end

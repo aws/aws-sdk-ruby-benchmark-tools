@@ -4,7 +4,6 @@ module Benchmark
   # Namespace for putting metrics into CloudWatch.
   module Metrics
     # Put metrics into CloudWatch.
-    # rubocop:disable Metrics/MethodLength
     def self.put_metric(client:, dims:, timestamp:, metric_name:, metric_value:)
       return unless metric_value.is_a?(Numeric) || metric_value.is_a?(Array)
 
@@ -35,7 +34,6 @@ module Benchmark
         raise 'Unknown type for metric value'
       end
     end
-    # rubocop:enable Metrics/MethodLength
 
     class << self
       private

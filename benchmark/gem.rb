@@ -55,8 +55,6 @@ module Benchmark
     # to ensure state of parent process is not modified by the require.
     # For accurate results, should be run before any SDK gems are required
     # in the parent process.
-    # rubocop:disable Metrics/AbcSize
-    # rubocop:disable Metrics/MethodLength
     def benchmark_require(report_data)
       return unless gem_name
 
@@ -74,8 +72,6 @@ module Benchmark
         end
       end)
     end
-    # rubocop:enable Metrics/AbcSize
-    # rubocop:enable Metrics/MethodLength
 
     # Benchmark creating a client - runs in a forked process (when supported)
     # to ensure state of parent process is not modified by the require.
@@ -97,8 +93,6 @@ module Benchmark
 
     # This runs in the main process and requires service gems.
     # It MUST be done after ALL testing of gem loads/client creates.
-    # rubocop:disable Metrics/AbcSize
-    # rubocop:disable Metrics/MethodLength
     def benchmark_operations(report_data)
       require_relative 'test_data'
       return unless gem_name && client_module_name && operation_benchmarks
@@ -139,7 +133,5 @@ module Benchmark
              "mem_allocated: #{format('%.2f', mem_allocated)} kb"
       end
     end
-    # rubocop:enable Metrics/AbcSize
-    # rubocop:enable Metrics/MethodLength
   end
 end
