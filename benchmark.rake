@@ -129,15 +129,16 @@ namespace :benchmark do
       payload: JSON.dump(payload)
     )
     regressions = JSON.parse(resp.payload.read)
-    if regressions.size > 0
+    if regressions.size.positive?
       message = "Detected #{regressions.size} possible performance regressions:\n"
       regressions.each do |metric, data|
         message += "* #{metric} - #{data}\n"
       end
       puts message
-      if ENV['GITHUB_OUTPUT'] && File.exist?(ENV['GITHUB_OUTPUT'])
+      github_output = ENV.fetch('GITHUB_OUTPUT')
+      if github_output && File.exist?(github_output)
         puts 'Setting step output'
-        File.write(ENV['GITHUB_OUTPT'], "message=#{message}", mode: 'a+')
+        File.write(github_output, "message=#{message}", mode: 'a+')
       end
     end
 
