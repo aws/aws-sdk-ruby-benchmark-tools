@@ -128,7 +128,7 @@ namespace :benchmark do
       function_name: 'DetectSDKPerformanceRegressions',
       payload: JSON.dump(payload)
     )
-    regressions = JSON.parse(resp.payload.read)
+    regressions = JSON.parse(resp.payload.read)['body']
     if regressions.size.positive?
       message = "Detected #{regressions.size} possible performance regressions:\n"
       regressions.each do |metric, data|
@@ -138,7 +138,8 @@ namespace :benchmark do
       github_output = ENV.fetch('GITHUB_OUTPUT')
       if github_output && File.exist?(github_output)
         puts 'Setting step output'
-        File.write(github_output, "message=#{message}", mode: 'a+')
+        output = "message<<EOF\n#{message}\nEOF\n"
+        File.write(github_output, output, mode: 'a+')
       end
     end
 
