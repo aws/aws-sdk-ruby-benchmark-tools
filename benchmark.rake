@@ -128,7 +128,8 @@ namespace :benchmark do
       function_name: 'DetectSDKPerformanceRegressions',
       payload: JSON.dump(payload)
     )
-    regressions = JSON.parse(resp.payload.read)['body']
+    output = JSON.parse(resp.payload.read)
+    regressions = JSON.parse(output['body'])
     if regressions.size.positive?
       message = "Detected #{regressions.size} possible performance regressions:\n"
       regressions.each do |metric, data|
