@@ -35,6 +35,21 @@ module Benchmark
       end
     end
 
+    def self.metric_namespace
+      case ENV.fetch('GH_REPO', nil)
+      when 'aws/aws-sdk-ruby'
+        'aws-sdk-ruby-v3-performance'
+      when 'aws/aws-sdk-ruby-staging'
+        'aws-sdk-ruby-v3-staging-performance'
+      when 'smithy-lang/smithy-ruby'
+        'hearth-performance'
+      when 'alextwoods/aws-sdk-ruby-v4' # temporary
+        'aws-sdk-ruby-v4-performance'
+      else
+        raise 'Unknown repository'
+      end
+    end
+
     class << self
       private
 
@@ -46,21 +61,6 @@ module Benchmark
           's' => 'Seconds',
           'ms' => 'Milliseconds'
         }.fetch(unit_suffix, 'None')
-      end
-
-      def metric_namespace
-        case ENV.fetch('GH_REPO', nil)
-        when 'aws/aws-sdk-ruby'
-          'aws-sdk-ruby-v3-performance'
-        when 'aws/aws-sdk-ruby-staging'
-          'aws-sdk-ruby-v3-staging-performance'
-        when 'smithy-lang/smithy-ruby'
-          'hearth-performance'
-        when 'alextwoods/aws-sdk-ruby-v4' # temporary
-          'aws-sdk-ruby-v4-performance'
-        else
-          raise 'Unknown repository'
-        end
       end
     end
   end

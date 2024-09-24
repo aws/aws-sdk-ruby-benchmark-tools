@@ -111,4 +111,36 @@ namespace :benchmark do
 
     puts 'TASK END: benchmark:put-metrics'
   end
+
+  task 'check-regressions' do
+    puts 'TASK START: benchmark:check-regressions'
+
+    require 'aws-sdk-lambda'
+    require_relative 'benchmark/metrics'
+
+    client = Aws::Lambda::Client.new
+    report = JSON.parse(File.read('benchmark_report.json'))
+    payload = {
+      metric_namespace: Benchmark::Metrics.metric_namespace,
+      report: report
+    }
+    resp = client.invoke(
+      function_name: 'DetectSDKPerformanceRegressions',
+      payload: JSON.dump(payload)
+    )
+    regressions = JSON.parse(resp.payload.read)
+    if regressions.size > 0
+      message = "Detected #{regressions.size} possible performance regressions:\n"
+      regressions.each do |metric, data|
+        message += "* #{metric} - #{data}\n"
+      end
+      puts message
+      if ENV['GITHUB_OUTPUT'] && File.exist?(ENV['GITHUB_OUTPUT'])
+        puts 'Setting step output'
+        File.write(ENV['GITHUB_OUTPT'], "message=#{message}", mode: 'a+')
+      end
+    end
+
+    puts 'TASK END: benchmark:put-metrics'
+  end
 end
