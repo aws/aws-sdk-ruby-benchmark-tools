@@ -17,9 +17,12 @@ module Benchmark
   def self.measure_time(num = 300, &block)
     values = Array.new(num)
     num.times do |i|
-      t1 = monotonic_milliseconds
+      GC.disable
+      t1 = Process.times
       block.call
-      values[i] = monotonic_milliseconds - t1
+      t2 = Process.times
+      GC.enable
+      values[i] = ((t2.utime + t2.stime) - (t1.utime + t1.stime)) * 1000.0
     end
     values
   end
