@@ -146,4 +146,41 @@ namespace :benchmark do
 
     puts 'TASK END: benchmark:put-metrics'
   end
+
+  desc 'Convert benchmark_report.json into RoadRunner compatible results.json'
+  task 'roadrunner' do
+    puts 'TASK START: benchmark:roadrunner'
+
+    require 'json'
+    require_relative 'benchmark'
+
+    if File.exist?('benchmark_report.json')
+      puts 'Found existing benchmark_report.json'
+
+      report = JSON.parse(File.read('benchmark_report.json'))
+      rr_report = Benchmark.initialize_rr_report_data
+
+      date = report['timestamp']
+      dimensions = [
+        { name: 'OS', value: report['os'] },
+        { name: 'CPU', value: report['cpu'] },
+        { name: 'RubyVersion', value: report['ruby_version'] }
+      ]
+
+      puts 'Converting benchmark_report.json into RoadRunner compatible results.json'
+      report['benchmark'].each do |service, data|
+        rr_report['results'] << Benchmark.convert_to_rr_result(service, data, date, dimensions)
+      end
+      rr_report['results'].flatten!
+
+      puts 'Conversion complete, writing out report to: results.json'
+      File.write('results.json', JSON.pretty_generate(rr_report))
+    else
+      puts 'No benchmark_report.json found, generating empty results.json'
+      File.write('results.json', JSON.pretty_generate(Benchmark.initialize_rr_report_data))
+    end
+
+    puts 'TASK END: benchmark:roadrunner'
+  end
+
 end
