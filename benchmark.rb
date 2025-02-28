@@ -94,7 +94,7 @@ module Benchmark
     report_data = {}
     report_data['productId'] = 'AWS SDK for Ruby v3'
     begin
-      report_data['commitID'] = `git rev-parse HEAD`.strip
+      report_data['commitId'] = `git rev-parse HEAD`.strip
     rescue StandardError
       # unable to get a commit, maybe run outside a git repo.  Skip
     end

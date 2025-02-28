@@ -148,7 +148,7 @@ namespace :benchmark do
   end
 
   desc 'Convert benchmark_report.json into RoadRunner compatible results.json'
-  task 'roadrunner' do
+  task 'roadrunner', [:commit_id] do |_, args|
     puts 'TASK START: benchmark:roadrunner'
 
     require 'json'
@@ -159,6 +159,7 @@ namespace :benchmark do
 
       report = JSON.parse(File.read('benchmark_report.json'))
       rr_report = Benchmark.initialize_rr_report_data
+      rr_report['commitID'] = args[:commit_id] if rr_report['commitId'].nil?
 
       date = report['timestamp']
       dimensions = [
