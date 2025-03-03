@@ -30,7 +30,7 @@ module RoadRunner
 
       # RoadRunner currently doesn't support kilobyte units. Converting to megabytes instead.
       if result['unit'] == 'Kilobytes'
-        result = 'Megabytes'
+        result['unit'] = 'Megabytes'
         if result['measurements'].is_a?(Array)
           result['measurements'].each_with_index do |measurement, index|
             result['measurements'][index] = measurement / 1000.0
