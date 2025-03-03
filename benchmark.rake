@@ -162,10 +162,11 @@ namespace :benchmark do
       rr_report['commitID'] = args[:commit_id] if rr_report['commitId'].nil?
 
       date = report['timestamp']
+      version_without_patch = report['ruby_version'].split('.')[0..1].join('.')
       dimensions = [
         { name: 'OS', value: report['os'] },
         { name: 'CPU', value: report['cpu'] },
-        { name: 'RubyVersion', value: report['ruby_version'] }
+        { name: 'RubyVersion', value: version_without_patch }
       ]
 
       puts 'Converting benchmark_report.json into RoadRunner compatible results.json'

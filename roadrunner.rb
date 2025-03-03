@@ -25,8 +25,20 @@ module RoadRunner
       result['description'] = generate_description(key)
       result['unit'] = unit(key)
       result['date'] = date
-      result['dimensions'] = generate_dimensions(key, dimensions, data['gem_version'])
+      result['dimensions'] = generate_dimensions(key, dimensions)
       result['measurements'] = value.is_a?(Array) ? value : [value]
+
+      # RoadRunner currently doesn't support kilobyte units. Converting to megabytes instead.
+      if result['unit'] == 'Kilobytes'
+        result = 'Megabytes'
+        if result['measurements'].is_a?(Array)
+          result['measurements'].each_with_index do |measurement, index|
+            result['measurements'][index] = measurement / 1000.0
+          end
+        else
+          result['measurements'] = result['measurements'] / 1000.0
+        end
+      end
       results << result
     end
     results
@@ -107,9 +119,8 @@ module RoadRunner
     end
   end
 
-  def self.generate_dimensions(key, shared_dimensions, gem_version)
+  def self.generate_dimensions(key, shared_dimensions)
     dimensions = shared_dimensions.dup
-    dimensions << { name: 'GemVersion', value: gem_version }
     if key.include?('small')
       dimensions << { name: 'Size', value: 'Small'}
     elsif key.include?('large')
