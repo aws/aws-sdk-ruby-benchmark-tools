@@ -152,13 +152,13 @@ namespace :benchmark do
     puts 'TASK START: benchmark:roadrunner'
 
     require 'json'
-    require_relative 'benchmark'
+    require_relative 'roadrunner'
 
     if File.exist?('benchmark_report.json')
       puts 'Found existing benchmark_report.json'
 
       report = JSON.parse(File.read('benchmark_report.json'))
-      rr_report = Benchmark.initialize_rr_report_data
+      rr_report = RoadRunner.initialize_report_data
       rr_report['commitID'] = args[:commit_id] if rr_report['commitId'].nil?
 
       date = report['timestamp']
@@ -170,7 +170,7 @@ namespace :benchmark do
 
       puts 'Converting benchmark_report.json into RoadRunner compatible results.json'
       report['benchmark'].each do |service, data|
-        rr_report['results'] << Benchmark.convert_to_rr_result(service, data, date, dimensions)
+        rr_report['results'] << RoadRunner.convert_result(service, data, date, dimensions)
       end
       rr_report['results'].flatten!
 
@@ -178,7 +178,7 @@ namespace :benchmark do
       File.write('results.json', JSON.pretty_generate(rr_report))
     else
       puts 'No benchmark_report.json found, generating empty results.json'
-      File.write('results.json', JSON.pretty_generate(Benchmark.initialize_rr_report_data))
+      File.write('results.json', JSON.pretty_generate(RoadRunner.initialize_report_data))
     end
 
     puts 'TASK END: benchmark:roadrunner'
