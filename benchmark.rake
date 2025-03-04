@@ -164,8 +164,6 @@ namespace :benchmark do
       date = report['timestamp']
       version_without_patch = report['ruby_version'].split('.')[0..1].join('.')
       dimensions = [
-        { name: 'OS', value: report['os'] },
-        { name: 'CPU', value: report['cpu'] },
         { name: 'RubyVersion', value: version_without_patch }
       ]
 
