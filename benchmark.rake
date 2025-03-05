@@ -159,7 +159,7 @@ namespace :benchmark do
 
       report = JSON.parse(File.read('benchmark_report.json'))
       rr_report = RoadRunner.initialize_report_data
-      rr_report['commitID'] = args[:commit_id] if rr_report['commitId'].nil?
+      rr_report['commitID'] = args[:commit_id] if rr_report['commitId'] == ''
 
       date = report['timestamp']
       version_without_patch = report['ruby_version'].split('.')[0..1].join('.')
