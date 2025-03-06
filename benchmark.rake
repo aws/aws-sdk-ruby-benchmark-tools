@@ -5,6 +5,8 @@ require_relative 'benchmark_utils'
 namespace :benchmark do
   desc 'Runs a performance benchmark'
   task :run do
+    date = Time.now.to_i
+
     puts 'TASK START: benchmark:run'
 
     require 'json'
@@ -12,14 +14,17 @@ namespace :benchmark do
     require 'tmpdir'
     # rubocop:disable Lint/RequireRelativeSelfPath
     require_relative 'benchmark'
+    require_relative 'roadrunner'
     # rubocop:enable Lint/RequireRelativeSelfPath
 
     # Require all benchmark gems
     Dir[File.join(__dir__, '..', 'gems', '*.rb')]
       .sort.each { |file| require file }
 
-    report_data = Benchmark.initialize_report_data
-    benchmark_data = report_data['benchmark']
+    old_report_data = Benchmark.initialize_report_data
+    benchmark_data = old_report_data['benchmark']
+
+    new_report_data = RoadRunner.initialize_report_data
 
     puts 'Benchmarking gem size/requires/client initialization'
     Dir.mktmpdir('benchmark-run') do |_tmpdir|
@@ -27,9 +32,9 @@ namespace :benchmark do
         benchmark_gem = benchmark_gem_klass.new
         puts "\tBenchmarking #{benchmark_gem.gem_name}"
         gem_data = benchmark_data[benchmark_gem.gem_name] ||= {}
-        benchmark_gem.benchmark_gem_size(gem_data)
-        benchmark_gem.benchmark_require(gem_data)
-        benchmark_gem.benchmark_client(gem_data)
+        benchmark_gem.benchmark_gem_size(gem_data, new_report_data['results'], date)
+        benchmark_gem.benchmark_require(gem_data, new_report_data['results'], date)
+        benchmark_gem.benchmark_client(gem_data, new_report_data['results'], date)
       end
     end
     puts 'Done benchmarking gem size/requires/client initialization'
@@ -42,13 +47,14 @@ namespace :benchmark do
     Benchmark::Gem.descendants.each do |benchmark_gem_klass|
       benchmark_gem = benchmark_gem_klass.new
       puts "\tBenchmarking #{benchmark_gem.gem_name}"
-      benchmark_gem.benchmark_operations(benchmark_data[benchmark_gem.gem_name])
+      benchmark_gem.benchmark_operations(benchmark_data[benchmark_gem.gem_name], new_report_data['results'], date)
     end
     puts 'Done benchmarking operations'
     puts "\n"
 
     puts 'Benchmarking complete, writing out report to: benchmark_report.json'
-    File.write('benchmark_report.json', JSON.pretty_generate(report_data))
+    File.write('benchmark_report.json', JSON.pretty_generate(old_report_data))
+    File.write('results.json', JSON.pretty_generate(new_report_data))
 
     puts 'TASK END: benchmark:run'
   end
@@ -154,33 +160,15 @@ namespace :benchmark do
     require 'json'
     require_relative 'roadrunner'
 
-    if File.exist?('benchmark_report.json')
-      puts 'Found existing benchmark_report.json'
-
-      report = JSON.parse(File.read('benchmark_report.json'))
-      rr_report = RoadRunner.initialize_report_data
-      rr_report['commitId'] = args[:commit_id] if rr_report['commitId'] == ''
-
-      date = report['timestamp']
-      version_without_patch = report['ruby_version'].split('.')[0..1].join('.')
-      dimensions = [
-        { name: 'RubyVersion', value: version_without_patch }
-      ]
-
-      puts 'Converting benchmark_report.json into RoadRunner compatible results.json'
-      report['benchmark'].each do |service, data|
-        rr_report['results'] << RoadRunner.convert_result(service, data, date, dimensions)
-      end
-      rr_report['results'].flatten!
-
-      puts 'Conversion complete, writing out report to: results.json'
-      File.write('results.json', JSON.pretty_generate(rr_report))
-    else
+    unless File.exist?('benchmark_report.json')
       puts 'No benchmark_report.json found, generating empty results.json'
       File.write('results.json', JSON.pretty_generate(RoadRunner.initialize_report_data))
     end
 
+    puts 'Found existing benchmark_report.json'
+
+    RoadRunner.run(args[:commit_id])
+
     puts 'TASK END: benchmark:roadrunner'
   end
-
 end

@@ -40,13 +40,23 @@ module Benchmark
 
     # Build the gem from its gemspec, then get the file size on disk.
     # Done within a temp directory to prevent accumulation of .gem artifacts.
-    def benchmark_gem_size(report_data)
+    def benchmark_gem_size(old_report_data, new_report_data, date)
       Dir.mktmpdir('benchmark-gem-size') do |tmpdir|
         Dir.chdir(gem_dir) do
           `gem build #{gem_name}.gemspec -o #{tmpdir}/#{gem_name}.gem`
-          report_data['gem_size_kb'] =
+          old_report_data['gem_size_kb'] =
             File.size("#{tmpdir}/#{gem_name}.gem") / 1024.0
-          report_data['gem_version'] = File.read('VERSION').strip
+          old_report_data['gem_version'] = File.read('VERSION').strip
+          new_report_data << {
+            'name' => "#{gem_name.split('-')[-1]}.gem.size",
+            'description' => "The size of the #{gem_name} gem.",
+            'unit' => 'Megabytes',
+            'date' => date,
+            'dimensions' => [
+              { name: 'RubyVersion', value: RUBY_VERSION.split('.')[0..1].join('.') }
+            ],
+            'measurements' => File.size("#{tmpdir}/#{gem_name}.gem") / 1048576.0
+          }
         end
       end
     end
@@ -55,7 +65,7 @@ module Benchmark
     # to ensure state of parent process is not modified by the require.
     # For accurate results, should be run before any SDK gems are required
     # in the parent process.
-    def benchmark_require(report_data)
+    def benchmark_require(report_data, new_report_data, date)
       return unless gem_name
 
       report_data.merge!(Benchmark.fork_run do |out|
@@ -71,13 +81,61 @@ module Benchmark
           out[:require_mem_allocated_kb] = r.total_allocated_memsize / 1024.0
         end
       end)
+
+      time = Benchmark.fork_run do |out|
+        t1 = Benchmark.monotonic_milliseconds
+        require gem_name
+        out[:require_time] = (Benchmark.monotonic_milliseconds - t1)
+      end
+
+      memory = Benchmark.fork_run do |out|
+        unless defined?(JRUBY_VERSION)
+          r = ::MemoryProfiler.report { require gem_name }
+          out[:require_mem_retained] = r.total_retained_memsize / 1048576.0
+          out[:require_mem_allocated] = r.total_allocated_memsize / 1048576.0
+        end
+      end
+
+      new_report_data << {
+        'name' => "#{gem_name.split('-')[-1]}.require.time",
+        'description' => "The time it takes to require the #{gem_name} gem.",
+        'unit' => 'Milliseconds',
+        'date' => date,
+        'dimensions' => [
+          { name: 'RubyVersion', value: RUBY_VERSION.split('.')[0..1].join('.') }
+        ],
+        'measurements' => time[:require_time]
+      }
+
+      new_report_data << {
+        'name' => "#{gem_name.split('-')[-1]}.require.retained.size",
+        'description' => "The amount of memory retained when requiring the #{gem_name} gem.",
+        'unit' => 'Megabytes',
+        'date' => date,
+        'dimensions' => [
+          { name: 'RubyVersion', value: RUBY_VERSION.split('.')[0..1].join('.') }
+        ],
+        'measurements' => memory[:require_mem_retained]
+      }
+
+      new_report_data << {
+        'name' => "#{gem_name.split('-')[-1]}.require.allocated.size",
+        'description' => "The amount of memory allocated when requiring the #{gem_name} gem.",
+        'unit' => 'Megabytes',
+        'date' => date,
+        'dimensions' => [
+          { name: 'RubyVersion', value: RUBY_VERSION.split('.')[0..1].join('.') }
+        ],
+        'measurements' => memory[:require_mem_allocated]
+      }
+
     end
 
     # Benchmark creating a client - runs in a forked process (when supported)
     # to ensure state of parent process is not modified by the require.
     # For accurate results, should be run before the client is initialized
     # in the parent process to ensure cache is clean.
-    def benchmark_client(report_data)
+    def benchmark_client(report_data, new_report_data, date)
       return unless client_module_name
 
       report_data.merge!(Benchmark.fork_run do |out|
@@ -89,11 +147,44 @@ module Benchmark
           out[:client_mem_allocated_kb] = r.total_allocated_memsize / 1024.0
         end
       end)
+
+      memory = Benchmark.fork_run do |out|
+        require gem_name
+        client_klass = Kernel.const_get(client_module_name).const_get(:Client)
+        unless defined?(JRUBY_VERSION)
+          r = ::MemoryProfiler.report { client_klass.new(stub_responses: true) }
+          out[:client_mem_retained] = r.total_retained_memsize / 1048576.0
+          out[:client_mem_allocated] = r.total_allocated_memsize / 1048576.0
+        end
+      end
+
+      new_report_data << {
+        'name' => "#{gem_name.split('-')[-1]}.client.retained.size",
+        'description' => "The amount of memory retained when creating the #{gem_name.split('-')[-1]} client.",
+        'unit' => 'Megabytes',
+        'date' => date,
+        'dimensions' => [
+          { name: 'RubyVersion', value: RUBY_VERSION.split('.')[0..1].join('.') }
+        ],
+        'measurements' => memory[:client_mem_retained]
+      }
+
+      new_report_data << {
+        'name' => "#{gem_name.split('-')[-1]}.client.allocated.size",
+        'description' => "The amount of memory allocated when creating the #{gem_name.split('-')[-1]} client.",
+        'unit' => 'Megabytes',
+        'date' => date,
+        'dimensions' => [
+          { name: 'RubyVersion', value: RUBY_VERSION.split('.')[0..1].join('.') }
+        ],
+        'measurements' => memory[:client_mem_allocated]
+      }
+
     end
 
     # This runs in the main process and requires service gems.
     # It MUST be done after ALL testing of gem loads/client creates.
-    def benchmark_operations(report_data)
+    def benchmark_operations(report_data, new_report_data, date)
       require_relative 'test_data'
       return unless gem_name && client_module_name && operation_benchmarks
 
@@ -104,6 +195,17 @@ module Benchmark
       report_data[:client_init_ms] = Benchmark.measure_time(300) do
         client_klass.new(stub_responses: true)
       end
+
+      new_report_data << {
+        'name' => "#{gem_name.split('-')[-1]}.client.init.time",
+        'description' => "The time it takes to initialize the #{gem_name.split('-')[-1]} client.",
+        'unit' => 'Milliseconds',
+        'date' => date,
+        'dimensions' => [
+          { name: 'RubyVersion', value: RUBY_VERSION.split('.')[0..1].join('.') }
+        ],
+        'measurements' => report_data[:client_init_ms]
+      }
 
       values = report_data[:client_init_ms]
       ms = format('%.2f', (values.sum(0.0) / values.size))
@@ -121,6 +223,17 @@ module Benchmark
           r = ::MemoryProfiler.report { test_def[:test].call(client, req) }
           mem_allocated = report_data["#{test_name}_allocated_kb"] =
             r.total_allocated_memsize / 1024.0
+
+          new_report_data << {
+            'name' => "#{gem_name.split('-')[-1]}.#{test_name.to_s.split('_').join}.allocated.size",
+            'description' => "The amount of memory allocated to perform the #{test_name.to_s.split('_').map(&:capitalize).join} operation.",
+            'unit' => 'Megabytes',
+            'date' => date,
+            'dimensions' => [
+              { name: 'RubyVersion', value: RUBY_VERSION.split('.')[0..1].join('.') }
+            ],
+            'measurements' => mem_allocated / 1024.0
+          }
         end
 
         n = test_def[:n] || 300
@@ -128,6 +241,18 @@ module Benchmark
           test_def[:test].call(client, req)
         end
         report_data["#{test_name}_ms"] = values
+
+        new_report_data << {
+          'name' => "#{gem_name.split('-')[-1]}.#{test_name.to_s.split('_').join}.time",
+          'description' => "The time it takes to perform the #{test_name.to_s.split('_').map(&:capitalize).join} operation.",
+          'unit' => 'Megabytes',
+          'date' => date,
+          'dimensions' => [
+            { name: 'RubyVersion', value: RUBY_VERSION.split('.')[0..1].join('.') }
+          ],
+          'measurements' => values
+        }
+
         ms = format('%.2f', (values.sum(0.0) / values.size))
         puts "\t\t#{test_name} avg: #{ms} ms\t" \
              "mem_allocated: #{format('%.2f', mem_allocated)} kb"
