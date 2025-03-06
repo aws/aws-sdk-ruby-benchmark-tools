@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative '../result'
+
 module Benchmark
   # Abstract base class for benchmarking an SDK Gem.
   # Implementors must define the `gem_name`, `client_klass`, and the
@@ -47,16 +49,14 @@ module Benchmark
           old_report_data['gem_size_kb'] =
             File.size("#{tmpdir}/#{gem_name}.gem") / 1024.0
           old_report_data['gem_version'] = File.read('VERSION').strip
-          new_report_data << {
-            'name' => "#{gem_name.split('-')[-1]}.gem.size",
-            'description' => "The size of the #{gem_name} gem.",
-            'unit' => 'Megabytes',
-            'date' => date,
-            'dimensions' => [
-              { name: 'RubyVersion', value: RUBY_VERSION.split('.')[0..1].join('.') }
-            ],
-            'measurements' => File.size("#{tmpdir}/#{gem_name}.gem") / 1048576.0
-          }
+
+          new_report_data << Result.new(
+            "#{gem_name.split('-')[-1]}.gem.size",
+            "The size of the #{gem_name} gem.",
+            'Megabytes',
+            date,
+            File.size("#{tmpdir}/#{gem_name}.gem") / 1048576.0
+          ).format
         end
       end
     end
@@ -96,38 +96,29 @@ module Benchmark
         end
       end
 
-      new_report_data << {
-        'name' => "#{gem_name.split('-')[-1]}.require.time",
-        'description' => "The time it takes to require the #{gem_name} gem.",
-        'unit' => 'Milliseconds',
-        'date' => date,
-        'dimensions' => [
-          { name: 'RubyVersion', value: RUBY_VERSION.split('.')[0..1].join('.') }
-        ],
-        'measurements' => time[:require_time]
-      }
+      new_report_data << Result.new(
+        "#{gem_name.split('-')[-1]}.require.time",
+        "The time it takes to require the #{gem_name} gem.",
+        'Milliseconds',
+        date,
+        time[:require_time]
+      ).format
 
-      new_report_data << {
-        'name' => "#{gem_name.split('-')[-1]}.require.retained.size",
-        'description' => "The amount of memory retained when requiring the #{gem_name} gem.",
-        'unit' => 'Megabytes',
-        'date' => date,
-        'dimensions' => [
-          { name: 'RubyVersion', value: RUBY_VERSION.split('.')[0..1].join('.') }
-        ],
-        'measurements' => memory[:require_mem_retained]
-      }
+      new_report_data << Result.new(
+        "#{gem_name.split('-')[-1]}.require.retained.size",
+        "The amount of memory retained when requiring the #{gem_name} gem.",
+        'Megabytes',
+        date,
+        memory[:require_mem_retained]
+      ).format
 
-      new_report_data << {
-        'name' => "#{gem_name.split('-')[-1]}.require.allocated.size",
-        'description' => "The amount of memory allocated when requiring the #{gem_name} gem.",
-        'unit' => 'Megabytes',
-        'date' => date,
-        'dimensions' => [
-          { name: 'RubyVersion', value: RUBY_VERSION.split('.')[0..1].join('.') }
-        ],
-        'measurements' => memory[:require_mem_allocated]
-      }
+      new_report_data << Result.new(
+        "#{gem_name.split('-')[-1]}.require.allocated.size",
+        "The amount of memory allocated when requiring the #{gem_name} gem.",
+        'Megabytes',
+        date,
+        memory[:require_mem_allocated]
+      ).format
 
     end
 
@@ -158,27 +149,21 @@ module Benchmark
         end
       end
 
-      new_report_data << {
-        'name' => "#{gem_name.split('-')[-1]}.client.retained.size",
-        'description' => "The amount of memory retained when creating the #{gem_name.split('-')[-1]} client.",
-        'unit' => 'Megabytes',
-        'date' => date,
-        'dimensions' => [
-          { name: 'RubyVersion', value: RUBY_VERSION.split('.')[0..1].join('.') }
-        ],
-        'measurements' => memory[:client_mem_retained]
-      }
+      new_report_data << Result.new(
+        "#{gem_name.split('-')[-1]}.client.retained.size",
+        "The amount of memory retained when creating the #{gem_name.split('-')[-1]} client.",
+        'Megabytes',
+        date,
+        memory[:client_mem_retained]
+      ).format
 
-      new_report_data << {
-        'name' => "#{gem_name.split('-')[-1]}.client.allocated.size",
-        'description' => "The amount of memory allocated when creating the #{gem_name.split('-')[-1]} client.",
-        'unit' => 'Megabytes',
-        'date' => date,
-        'dimensions' => [
-          { name: 'RubyVersion', value: RUBY_VERSION.split('.')[0..1].join('.') }
-        ],
-        'measurements' => memory[:client_mem_allocated]
-      }
+      new_report_data << Result.new(
+        "#{gem_name.split('-')[-1]}.client.allocated.size",
+        "The amount of memory allocated when creating the #{gem_name.split('-')[-1]} client.",
+        'Megabytes',
+        date,
+        memory[:client_mem_allocated]
+      ).format
 
     end
 
@@ -196,16 +181,13 @@ module Benchmark
         client_klass.new(stub_responses: true)
       end
 
-      new_report_data << {
-        'name' => "#{gem_name.split('-')[-1]}.client.init.time",
-        'description' => "The time it takes to initialize the #{gem_name.split('-')[-1]} client.",
-        'unit' => 'Milliseconds',
-        'date' => date,
-        'dimensions' => [
-          { name: 'RubyVersion', value: RUBY_VERSION.split('.')[0..1].join('.') }
-        ],
-        'measurements' => report_data[:client_init_ms]
-      }
+      new_report_data << Result.new(
+        "#{gem_name.split('-')[-1]}.client.init.time",
+        "The time it takes to initialize the #{gem_name.split('-')[-1]} client.",
+        'Milliseconds',
+        date,
+        report_data[:client_init_ms]
+      ).format
 
       values = report_data[:client_init_ms]
       ms = format('%.2f', (values.sum(0.0) / values.size))
@@ -224,16 +206,13 @@ module Benchmark
           mem_allocated = report_data["#{test_name}_allocated_kb"] =
             r.total_allocated_memsize / 1024.0
 
-          new_report_data << {
-            'name' => "#{gem_name.split('-')[-1]}.#{test_name.to_s.split('_').join}.allocated.size",
-            'description' => "The amount of memory allocated to perform the #{test_name.to_s.split('_').map(&:capitalize).join} operation.",
-            'unit' => 'Megabytes',
-            'date' => date,
-            'dimensions' => [
-              { name: 'RubyVersion', value: RUBY_VERSION.split('.')[0..1].join('.') }
-            ],
-            'measurements' => mem_allocated / 1024.0
-          }
+          new_report_data << Result.new(
+            "#{gem_name.split('-')[-1]}.#{test_name.to_s.split('_').join}.allocated.size",
+            "The amount of memory allocated to perform the #{test_name.to_s.split('_').map(&:capitalize).join} operation.",
+            'Megabytes',
+            date,
+            mem_allocated / 1024.0
+          ).format
         end
 
         n = test_def[:n] || 300
@@ -242,16 +221,13 @@ module Benchmark
         end
         report_data["#{test_name}_ms"] = values
 
-        new_report_data << {
-          'name' => "#{gem_name.split('-')[-1]}.#{test_name.to_s.split('_').join}.time",
-          'description' => "The time it takes to perform the #{test_name.to_s.split('_').map(&:capitalize).join} operation.",
-          'unit' => 'Megabytes',
-          'date' => date,
-          'dimensions' => [
-            { name: 'RubyVersion', value: RUBY_VERSION.split('.')[0..1].join('.') }
-          ],
-          'measurements' => values
-        }
+        new_report_data << Result.new(
+          "#{gem_name.split('-')[-1]}.#{test_name.to_s.split('_').join}.time",
+          "The time it takes to perform the #{test_name.to_s.split('_').map(&:capitalize).join} operation.",
+          'Megabytes',
+          date,
+          values
+        ).format
 
         ms = format('%.2f', (values.sum(0.0) / values.size))
         puts "\t\t#{test_name} avg: #{ms} ms\t" \
