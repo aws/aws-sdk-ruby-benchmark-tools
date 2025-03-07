@@ -4,7 +4,7 @@ require_relative 'benchmark_utils'
 
 namespace :benchmark do
   desc 'Runs a performance benchmark'
-  task :run do
+  task :run, [:commit_id] do |_, args|
     date = Time.now.to_i
 
     puts 'TASK START: benchmark:run'
@@ -24,6 +24,7 @@ namespace :benchmark do
     benchmark_data = old_report_data['benchmark']
 
     new_report_data = Benchmark.initialize_new_report_data
+    new_report_data['commitId'] = args[:commit_id] if args[:commit_id]
 
     puts 'Benchmarking gem size/requires/client initialization'
     Dir.mktmpdir('benchmark-run') do |_tmpdir|
