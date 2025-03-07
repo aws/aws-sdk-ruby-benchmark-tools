@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module Benchmark
+  # Class for formatting RoadRunner results.
   class Result
     attr_reader :name, :description, :unit, :date, :measurements
 

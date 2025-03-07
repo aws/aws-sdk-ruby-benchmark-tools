@@ -55,7 +55,7 @@ module Benchmark
             "The size of the #{gem_name} gem.",
             'Megabytes',
             date,
-            File.size("#{tmpdir}/#{gem_name}.gem") / 1048576.0
+            File.size("#{tmpdir}/#{gem_name}.gem") / 1_048_576.0
           ).format
         end
       end
@@ -91,8 +91,8 @@ module Benchmark
       memory = Benchmark.fork_run do |out|
         unless defined?(JRUBY_VERSION)
           r = ::MemoryProfiler.report { require gem_name }
-          out[:require_mem_retained] = r.total_retained_memsize / 1048576.0
-          out[:require_mem_allocated] = r.total_allocated_memsize / 1048576.0
+          out[:require_mem_retained] = r.total_retained_memsize / 1_048_576.0
+          out[:require_mem_allocated] = r.total_allocated_memsize / 1_048_576.0
         end
       end
 
@@ -119,7 +119,6 @@ module Benchmark
         date,
         memory[:require_mem_allocated]
       ).format
-
     end
 
     # Benchmark creating a client - runs in a forked process (when supported)
@@ -144,8 +143,8 @@ module Benchmark
         client_klass = Kernel.const_get(client_module_name).const_get(:Client)
         unless defined?(JRUBY_VERSION)
           r = ::MemoryProfiler.report { client_klass.new(stub_responses: true) }
-          out[:client_mem_retained] = r.total_retained_memsize / 1048576.0
-          out[:client_mem_allocated] = r.total_allocated_memsize / 1048576.0
+          out[:client_mem_retained] = r.total_retained_memsize / 1_048_576.0
+          out[:client_mem_allocated] = r.total_allocated_memsize / 1_048_576.0
         end
       end
 
@@ -164,7 +163,6 @@ module Benchmark
         date,
         memory[:client_mem_allocated]
       ).format
-
     end
 
     # This runs in the main process and requires service gems.
@@ -208,7 +206,8 @@ module Benchmark
 
           new_report_data << Result.new(
             "#{gem_name.split('-')[-1]}.#{test_name.to_s.split('_').join}.allocated.size",
-            "The amount of memory allocated to perform the #{test_name.to_s.split('_').map(&:capitalize).join} operation.",
+            'The amount of memory allocated to perform the ' \
+            "#{test_name.to_s.split('_').map(&:capitalize).join} operation.",
             'Megabytes',
             date,
             mem_allocated / 1024.0

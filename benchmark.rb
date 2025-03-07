@@ -86,4 +86,16 @@ module Benchmark
     report_data['benchmark'] = {}
     report_data
   end
+
+  def self.initialize_new_report_data
+    report_data = {}
+    report_data['productId'] = 'ruby3'
+    begin
+      report_data['commitId'] = `git rev-parse HEAD`.strip
+    rescue StandardError
+      # unable to get a commit, maybe run outside a git repo.  Skip
+    end
+    report_data['results'] = []
+    report_data
+  end
 end

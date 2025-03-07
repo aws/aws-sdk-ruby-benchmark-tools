@@ -14,7 +14,6 @@ namespace :benchmark do
     require 'tmpdir'
     # rubocop:disable Lint/RequireRelativeSelfPath
     require_relative 'benchmark'
-    require_relative 'roadrunner'
     # rubocop:enable Lint/RequireRelativeSelfPath
 
     # Require all benchmark gems
@@ -24,7 +23,7 @@ namespace :benchmark do
     old_report_data = Benchmark.initialize_report_data
     benchmark_data = old_report_data['benchmark']
 
-    new_report_data = RoadRunner.initialize_report_data
+    new_report_data = Benchmark.initialize_new_report_data
 
     puts 'Benchmarking gem size/requires/client initialization'
     Dir.mktmpdir('benchmark-run') do |_tmpdir|
@@ -52,7 +51,7 @@ namespace :benchmark do
     puts 'Done benchmarking operations'
     puts "\n"
 
-    puts 'Benchmarking complete, writing out report to: benchmark_report.json'
+    puts 'Benchmarking complete, writing out report to: benchmark_report.json, results.json'
     File.write('benchmark_report.json', JSON.pretty_generate(old_report_data))
     File.write('results.json', JSON.pretty_generate(new_report_data))
 
@@ -151,24 +150,5 @@ namespace :benchmark do
     end
 
     puts 'TASK END: benchmark:put-metrics'
-  end
-
-  desc 'Convert benchmark_report.json into RoadRunner compatible results.json'
-  task 'roadrunner', [:commit_id] do |_, args|
-    puts 'TASK START: benchmark:roadrunner'
-
-    require 'json'
-    require_relative 'roadrunner'
-
-    unless File.exist?('benchmark_report.json')
-      puts 'No benchmark_report.json found, generating empty results.json'
-      File.write('results.json', JSON.pretty_generate(RoadRunner.initialize_report_data))
-    end
-
-    puts 'Found existing benchmark_report.json'
-
-    RoadRunner.run(args[:commit_id])
-
-    puts 'TASK END: benchmark:roadrunner'
   end
 end
