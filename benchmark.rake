@@ -5,8 +5,6 @@ require_relative 'benchmark_utils'
 namespace :benchmark do
   desc 'Runs a performance benchmark'
   task :run, [:commit_id] do |_, args|
-    date = Time.now.to_i
-
     puts 'TASK START: benchmark:run'
 
     require 'json'
@@ -20,11 +18,11 @@ namespace :benchmark do
     Dir[File.join(__dir__, '..', 'gems', '*.rb')]
       .sort.each { |file| require file }
 
-    old_report_data = Benchmark.initialize_report_data
-    benchmark_data = old_report_data['benchmark']
+    legacy_report_data = Benchmark.initialize_legacy_report_data
+    benchmark_data = legacy_report_data['benchmark']
 
-    new_report_data = Benchmark.initialize_new_report_data
-    new_report_data['commitId'] = args[:commit_id] if args[:commit_id]
+    report_data = Benchmark.initialize_report_data
+    report_data['commitId'] = args[:commit_id] if args[:commit_id]
 
     puts 'Benchmarking gem size/requires/client initialization'
     Dir.mktmpdir('benchmark-run') do |_tmpdir|
@@ -32,9 +30,9 @@ namespace :benchmark do
         benchmark_gem = benchmark_gem_klass.new
         puts "\tBenchmarking #{benchmark_gem.gem_name}"
         gem_data = benchmark_data[benchmark_gem.gem_name] ||= {}
-        benchmark_gem.benchmark_gem_size(gem_data, new_report_data['results'], date)
-        benchmark_gem.benchmark_require(gem_data, new_report_data['results'], date)
-        benchmark_gem.benchmark_client(gem_data, new_report_data['results'], date)
+        benchmark_gem.benchmark_gem_size(gem_data, report_data['results'])
+        benchmark_gem.benchmark_require(gem_data, report_data['results'])
+        benchmark_gem.benchmark_client(gem_data, report_data['results'])
       end
     end
     puts 'Done benchmarking gem size/requires/client initialization'
@@ -47,7 +45,7 @@ namespace :benchmark do
     Benchmark::Gem.descendants.each do |benchmark_gem_klass|
       benchmark_gem = benchmark_gem_klass.new
       puts "\tBenchmarking #{benchmark_gem.gem_name}"
-      benchmark_gem.benchmark_operations(benchmark_data[benchmark_gem.gem_name], new_report_data['results'], date)
+      benchmark_gem.benchmark_operations(benchmark_data[benchmark_gem.gem_name], report_data['results'])
     end
     puts 'Done benchmarking operations'
     puts "\n"
@@ -56,8 +54,8 @@ namespace :benchmark do
     unless File.directory?('benchmark-results')
       FileUtils.mkdir_p('benchmark-results')
     end
-    File.write('benchmark-results/benchmark_report.json', JSON.pretty_generate(old_report_data))
-    File.write('benchmark-results/results.json', JSON.pretty_generate(new_report_data))
+    File.write('benchmark-results/benchmark_report.json', JSON.pretty_generate(legacy_report_data))
+    File.write('benchmark-results/results.json', JSON.pretty_generate(report_data))
 
     puts 'TASK END: benchmark:run'
   end

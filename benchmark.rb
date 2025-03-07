@@ -66,7 +66,7 @@ module Benchmark
     end
   end
 
-  def self.initialize_report_data
+  def self.initialize_legacy_report_data
     report_data = { 'version' => '1.0' }
     begin
       report_data['commit_id'] = `git rev-parse HEAD`.strip
@@ -87,7 +87,7 @@ module Benchmark
     report_data
   end
 
-  def self.initialize_new_report_data
+  def self.initialize_report_data
     report_data = {}
     report_data['productId'] = 'ruby3'
     begin
