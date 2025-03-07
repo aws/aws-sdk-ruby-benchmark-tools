@@ -52,8 +52,11 @@ namespace :benchmark do
     puts "\n"
 
     puts 'Benchmarking complete, writing out report to: benchmark_report.json, results.json'
-    File.write('benchmark_report.json', JSON.pretty_generate(old_report_data))
-    File.write('results.json', JSON.pretty_generate(new_report_data))
+    unless File.directory?('benchmark-results')
+      FileUtils.mkdir_p('benchmark-results')
+    end
+    File.write('benchmark-results/benchmark_report.json', JSON.pretty_generate(old_report_data))
+    File.write('benchmark-results/results.json', JSON.pretty_generate(new_report_data))
 
     puts 'TASK END: benchmark:run'
   end
@@ -72,7 +75,7 @@ namespace :benchmark do
     client.put_object(
       bucket: bucket,
       key: key,
-      body: File.read('benchmark_report.json')
+      body: File.read('benchmark-results/benchmark_report.json')
     )
     puts 'Upload complete'
 
@@ -86,7 +89,7 @@ namespace :benchmark do
     require 'aws-sdk-cloudwatch'
     require_relative 'benchmark/metrics'
 
-    report = JSON.parse(File.read('benchmark_report.json'))
+    report = JSON.parse(File.read('benchmark-results/benchmark_report.json'))
     ruby_version = report['ruby_version'].split('.').first(2).join('.')
     target = "#{report['ruby_engine']}-#{ruby_version}"
 
@@ -124,7 +127,7 @@ namespace :benchmark do
     require_relative 'benchmark/metrics'
 
     client = Aws::Lambda::Client.new
-    report = JSON.parse(File.read('benchmark_report.json'))
+    report = JSON.parse(File.read('benchmark-results/benchmark_report.json'))
     payload = {
       metric_namespace: Benchmark::Metrics.metric_namespace,
       report: report
