@@ -22,8 +22,6 @@ module Benchmark
         'date' => Time.now.to_i,
         'dimensions' => [
           { name: 'RubyVersion', value: RUBY_VERSION.rpartition('.').first },
-          { name: 'CPU', value: RbConfig::CONFIG['host_cpu'] },
-          { name: 'OS', value: Benchmark.host_os }
         ],
         'measurements' => @measurements.is_a?(Array) ? @measurements : [@measurements]
       }

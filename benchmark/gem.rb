@@ -71,20 +71,6 @@ module Benchmark
     def benchmark_require(legacy_report_data, report_data)
       return unless gem_name
 
-      legacy_report_data.merge!(Benchmark.fork_run do |out|
-        t1 = Benchmark.monotonic_milliseconds
-        require gem_name
-        out[:require_time_ms] = (Benchmark.monotonic_milliseconds - t1)
-      end)
-
-      legacy_report_data.merge!(Benchmark.fork_run do |out|
-        unless defined?(JRUBY_VERSION)
-          r = ::MemoryProfiler.report { require gem_name }
-          out[:require_mem_retained_kb] = r.total_retained_memsize / 1024.0
-          out[:require_mem_allocated_kb] = r.total_allocated_memsize / 1024.0
-        end
-      end)
-
       time = Benchmark.fork_run do |out|
         t1 = Benchmark.monotonic_milliseconds
         require gem_name
@@ -98,6 +84,9 @@ module Benchmark
           out[:require_mem_allocated] = r.total_allocated_memsize / (1024.0 * 1024.0)
         end
       end
+
+      legacy_report_data.merge!(time)
+      legacy_report_data.merge!(memory)
 
       report_data << Result.new(
         "#{service_name(gem_name)}.require.time",

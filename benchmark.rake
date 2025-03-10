@@ -51,9 +51,7 @@ namespace :benchmark do
     puts "\n"
 
     puts 'Benchmarking complete, writing out report to: benchmark_report.json, results.json'
-    unless File.directory?('benchmark-results')
-      FileUtils.mkdir_p('benchmark-results')
-    end
+    FileUtils.mkdir_p('benchmark-results') unless File.directory?('benchmark-results')
     File.write('benchmark-results/benchmark_report.json', JSON.pretty_generate(legacy_report_data))
     File.write('benchmark-results/results.json', JSON.pretty_generate(report_data))
 
