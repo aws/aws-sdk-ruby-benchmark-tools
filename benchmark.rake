@@ -22,7 +22,7 @@ namespace :benchmark do
     benchmark_data = legacy_report_data['benchmark']
 
     report_data = Benchmark.initialize_report_data
-    report_data['commitId'] = args[:commit_id] if args[:commit_id]
+    report_data['commitId'] = args[:commit_id]
 
     puts 'Benchmarking gem size/requires/client initialization'
     Dir.mktmpdir('benchmark-run') do |_tmpdir|
