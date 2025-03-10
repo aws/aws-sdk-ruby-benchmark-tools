@@ -87,9 +87,10 @@ module Benchmark
     report_data
   end
 
-  def self.initialize_report_data
+  def self.initialize_report_data(commit_id)
     report_data = {}
     report_data['productId'] = 'ruby3'
+    report_data['commitId'] = commit_id
     report_data['results'] = []
     report_data
   end
