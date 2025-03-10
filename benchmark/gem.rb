@@ -57,7 +57,6 @@ module Benchmark
           report_data << Result.new(
             "#{service_name(gem_name)}.gem.size",
             "The size of the #{gem_name} gem.",
-            'Megabytes',
             File.size("#{tmpdir}/#{gem_name}.gem") / (1024.0 * 1024.0)
           ).format
         end
@@ -91,21 +90,18 @@ module Benchmark
       report_data << Result.new(
         "#{service_name(gem_name)}.require.time",
         "The time it takes to require the #{gem_name} gem.",
-        'Milliseconds',
         time[:require_time]
       ).format
 
       report_data << Result.new(
         "#{service_name(gem_name)}.require.retained.size",
         "The amount of memory retained when requiring the #{gem_name} gem.",
-        'Megabytes',
         memory[:require_mem_retained]
       ).format
 
       report_data << Result.new(
         "#{service_name(gem_name)}.require.allocated.size",
         "The amount of memory allocated when requiring the #{gem_name} gem.",
-        'Megabytes',
         memory[:require_mem_allocated]
       ).format
     end
@@ -117,16 +113,6 @@ module Benchmark
     def benchmark_client(legacy_report_data, report_data)
       return unless client_module_name
 
-      legacy_report_data.merge!(Benchmark.fork_run do |out|
-        require gem_name
-        client_klass = Kernel.const_get(client_module_name).const_get(:Client)
-        unless defined?(JRUBY_VERSION)
-          r = ::MemoryProfiler.report { client_klass.new(stub_responses: true) }
-          out[:client_mem_retained_kb] = r.total_retained_memsize / 1024.0
-          out[:client_mem_allocated_kb] = r.total_allocated_memsize / 1024.0
-        end
-      end)
-
       memory = Benchmark.fork_run do |out|
         require gem_name
         client_klass = Kernel.const_get(client_module_name).const_get(:Client)
@@ -137,24 +123,24 @@ module Benchmark
         end
       end
 
+      legacy_report_data.merge!(memory)
+
       report_data << Result.new(
         "#{service_name(gem_name)}.client.retained.size",
         "The amount of memory retained when creating the #{service_name(gem_name)} client.",
-        'Megabytes',
         memory[:client_mem_retained]
       ).format
 
       report_data << Result.new(
         "#{service_name(gem_name)}.client.allocated.size",
         "The amount of memory allocated when creating the #{service_name(gem_name)} client.",
-        'Megabytes',
         memory[:client_mem_allocated]
       ).format
     end
 
     # This runs in the main process and requires service gems.
     # It MUST be done after ALL testing of gem loads/client creates.
-    def benchmark_operations(legacy_report_data, report_data)
+    def benchmark_operations_init(legacy_report_data, report_data)
       require_relative 'test_data'
       return unless gem_name && client_module_name && operation_benchmarks
 
@@ -169,7 +155,6 @@ module Benchmark
       report_data << Result.new(
         "#{service_name(gem_name)}.client.init.time",
         "The time it takes to initialize the #{service_name(gem_name)} client.",
-        'Milliseconds',
         legacy_report_data[:client_init_ms]
       ).format
 
@@ -177,6 +162,10 @@ module Benchmark
       ms = format('%.2f', (values.sum(0.0) / values.size))
       puts "\t\t#{gem_name} client init avg: #{ms} ms"
 
+      benchmark_operations(legacy_report_data, report_data, client_klass)
+    end
+
+    def benchmark_operations(legacy_report_data, report_data, client_klass)
       operation_benchmarks.each do |test_name, test_def|
         client = client_klass.new(stub_responses: true)
         req = test_def[:setup].call(client)
@@ -194,7 +183,6 @@ module Benchmark
             "#{service_name(gem_name)}.#{test_name.to_s.split('_').join}.allocated.size",
             'The amount of memory allocated to perform the ' \
             "#{test_name.to_s.split('_').map(&:capitalize).join} operation.",
-            'Megabytes',
             mem_allocated / 1024.0
           ).format
         end
@@ -208,7 +196,6 @@ module Benchmark
         report_data << Result.new(
           "#{service_name(gem_name)}.#{test_name.to_s.split('_').join}.time",
           "The time it takes to perform the #{test_name.to_s.split('_').map(&:capitalize).join} operation.",
-          'Milliseconds',
           values
         ).format
 

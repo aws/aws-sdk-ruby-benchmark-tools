@@ -45,7 +45,7 @@ namespace :benchmark do
     Benchmark::Gem.descendants.each do |benchmark_gem_klass|
       benchmark_gem = benchmark_gem_klass.new
       puts "\tBenchmarking #{benchmark_gem.gem_name}"
-      benchmark_gem.benchmark_operations(benchmark_data[benchmark_gem.gem_name], report_data['results'])
+      benchmark_gem.benchmark_operations_init(benchmark_data[benchmark_gem.gem_name], report_data['results'])
     end
     puts 'Done benchmarking operations'
     puts "\n"

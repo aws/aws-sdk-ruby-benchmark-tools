@@ -14,9 +14,15 @@ AllCops:
   NewCops: enable
   TargetRubyVersion: 2.5
 
+# TODO: remove exceptions for benchmark/gem.rb when RoadRunner is fully developed
+Metrics:
+  Exclude:
+    - 'benchmark/gem.rb'
+
 Metrics/BlockLength:
   Exclude:
     - '*.rake'
+    - 'benchmark/gem.rb'
 
 Style/GlobalVars:
   Enabled: false
