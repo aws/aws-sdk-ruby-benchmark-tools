@@ -6,6 +6,7 @@ module Benchmark
   # Abstract base class for benchmarking an SDK Gem.
   # Implementors must define the `gem_name`, `client_klass`, and the
   # `operation_benchmarks` methods.
+  # rubocop:disable Metrics/ClassLength
   class Gem
     # Return all subclasses of this class.
     def self.descendants
@@ -57,7 +58,7 @@ module Benchmark
           report_data << Result.new(
             "#{service_name(gem_name)}.gem.size",
             "The size of the #{gem_name} gem.",
-            File.size("#{tmpdir}/#{gem_name}.gem") / (1024.0 * 1024.0)
+            [File.size("#{tmpdir}/#{gem_name}.gem") / (1024.0 * 1024.0)]
           ).format
         end
       end
@@ -67,6 +68,7 @@ module Benchmark
     # to ensure state of parent process is not modified by the require.
     # For accurate results, should be run before any SDK gems are required
     # in the parent process.
+    # rubocop:disable Metrics/MethodLength
     def benchmark_require(legacy_report_data, report_data)
       return unless gem_name
 
@@ -90,21 +92,22 @@ module Benchmark
       report_data << Result.new(
         "#{service_name(gem_name)}.require.time",
         "The time it takes to require the #{gem_name} gem.",
-        time[:require_time]
+        [time[:require_time]]
       ).format
 
       report_data << Result.new(
         "#{service_name(gem_name)}.require.retained.size",
         "The amount of memory retained when requiring the #{gem_name} gem.",
-        memory[:require_mem_retained]
+        [memory[:require_mem_retained]]
       ).format
 
       report_data << Result.new(
         "#{service_name(gem_name)}.require.allocated.size",
         "The amount of memory allocated when requiring the #{gem_name} gem.",
-        memory[:require_mem_allocated]
+        [memory[:require_mem_allocated]]
       ).format
     end
+    # rubocop:enable Metrics/MethodLength
 
     # Benchmark creating a client - runs in a forked process (when supported)
     # to ensure state of parent process is not modified by the require.
@@ -128,19 +131,20 @@ module Benchmark
       report_data << Result.new(
         "#{service_name(gem_name)}.client.retained.size",
         "The amount of memory retained when creating the #{service_name(gem_name)} client.",
-        memory[:client_mem_retained]
+        [memory[:client_mem_retained]]
       ).format
 
       report_data << Result.new(
         "#{service_name(gem_name)}.client.allocated.size",
         "The amount of memory allocated when creating the #{service_name(gem_name)} client.",
-        memory[:client_mem_allocated]
+        [memory[:client_mem_allocated]]
       ).format
     end
 
     # This runs in the main process and requires service gems.
     # It MUST be done after ALL testing of gem loads/client creates.
-    def benchmark_operations_init(legacy_report_data, report_data)
+    # rubocop:disable Metrics/MethodLength, Metrics/AbcSize, Metrics/CyclomaticComplexity
+    def benchmark_operations(legacy_report_data, report_data)
       require_relative 'test_data'
       return unless gem_name && client_module_name && operation_benchmarks
 
@@ -162,13 +166,13 @@ module Benchmark
       ms = format('%.2f', (values.sum(0.0) / values.size))
       puts "\t\t#{gem_name} client init avg: #{ms} ms"
 
-      benchmark_operations(legacy_report_data, report_data, client_klass)
-    end
-
-    def benchmark_operations(legacy_report_data, report_data, client_klass)
+      # rubocop:disable Metrics/BlockLength
       operation_benchmarks.each do |test_name, test_def|
         client = client_klass.new(stub_responses: true)
         req = test_def[:setup].call(client)
+
+        op_name = test_name.to_s.split('_').join
+        op_name_pascal = test_name.to_s.split('_').map(&:capitalize).join
 
         # warmup (run a few iterations without measurement)
         2.times { test_def[:test].call(client, req) }
@@ -180,10 +184,10 @@ module Benchmark
             r.total_allocated_memsize / 1024.0
 
           report_data << Result.new(
-            "#{service_name(gem_name)}.#{test_name.to_s.split('_').join}.allocated.size",
+            "#{service_name(gem_name)}.#{op_name}.allocated.size",
             'The amount of memory allocated to perform the ' \
-            "#{test_name.to_s.split('_').map(&:capitalize).join} operation.",
-            mem_allocated / 1024.0
+            "#{op_name_pascal} operation.",
+            [mem_allocated / 1024.0]
           ).format
         end
 
@@ -194,8 +198,8 @@ module Benchmark
         legacy_report_data["#{test_name}_ms"] = values
 
         report_data << Result.new(
-          "#{service_name(gem_name)}.#{test_name.to_s.split('_').join}.time",
-          "The time it takes to perform the #{test_name.to_s.split('_').map(&:capitalize).join} operation.",
+          "#{service_name(gem_name)}.#{op_name}.time",
+          "The time it takes to perform the #{op_name_pascal} operation.",
           values
         ).format
 
@@ -203,6 +207,9 @@ module Benchmark
         puts "\t\t#{test_name} avg: #{ms} ms\t" \
              "mem_allocated: #{format('%.2f', mem_allocated)} kb"
       end
+      # rubocop:enable Metrics/BlockLength
     end
+    # rubocop:enable Metrics/MethodLength, Metrics/AbcSize, Metrics/CyclomaticComplexity
   end
+  # rubocop:enable Metrics/ClassLength
 end
