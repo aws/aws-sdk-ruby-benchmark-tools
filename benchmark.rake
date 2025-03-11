@@ -85,7 +85,7 @@ namespace :benchmark do
     require 'aws-sdk-cloudwatch'
     require_relative 'benchmark/metrics'
 
-    report = JSON.parse(File.read('benchmark-results/benchmark_report.json'))
+    report = JSON.load_file('benchmark-results/benchmark_report.json')
     ruby_version = report['ruby_version'].split('.').first(2).join('.')
     target = "#{report['ruby_engine']}-#{ruby_version}"
 
@@ -123,7 +123,7 @@ namespace :benchmark do
     require_relative 'benchmark/metrics'
 
     client = Aws::Lambda::Client.new
-    report = JSON.parse(File.read('benchmark-results/benchmark_report.json'))
+    report = JSON.load_file('benchmark-results/benchmark_report.json')
     payload = {
       metric_namespace: Benchmark::Metrics.metric_namespace,
       report: report
