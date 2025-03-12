@@ -6,7 +6,6 @@ module Benchmark
   # Abstract base class for benchmarking an SDK Gem.
   # Implementors must define the `gem_name`, `client_klass`, and the
   # `operation_benchmarks` methods.
-  # rubocop:disable Metrics/ClassLength
   class Gem
     # Return all subclasses of this class.
     def self.descendants
@@ -211,5 +210,4 @@ module Benchmark
     end
     # rubocop:enable Metrics/MethodLength, Metrics/AbcSize, Metrics/CyclomaticComplexity
   end
-  # rubocop:enable Metrics/ClassLength
 end
