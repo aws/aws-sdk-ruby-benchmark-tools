@@ -18,5 +18,8 @@ Metrics/BlockLength:
   Exclude:
     - '*.rake'
 
+Metrics/ClassLength:
+  Max: 200
+
 Style/GlobalVars:
   Enabled: false

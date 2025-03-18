@@ -4,7 +4,7 @@ require_relative 'benchmark_utils'
 
 namespace :benchmark do
   desc 'Runs a performance benchmark'
-  task :run do
+  task :run, [:commit_id] do |_, args|
     puts 'TASK START: benchmark:run'
 
     require 'json'
@@ -18,8 +18,10 @@ namespace :benchmark do
     Dir[File.join(__dir__, '..', 'gems', '*.rb')]
       .sort.each { |file| require file }
 
-    report_data = Benchmark.initialize_report_data
-    benchmark_data = report_data['benchmark']
+    legacy_report_data = Benchmark.initialize_legacy_report_data
+    benchmark_data = legacy_report_data['benchmark']
+
+    report_data = Benchmark.initialize_report_data(args[:commit_id])
 
     puts 'Benchmarking gem size/requires/client initialization'
     Dir.mktmpdir('benchmark-run') do |_tmpdir|
@@ -27,9 +29,9 @@ namespace :benchmark do
         benchmark_gem = benchmark_gem_klass.new
         puts "\tBenchmarking #{benchmark_gem.gem_name}"
         gem_data = benchmark_data[benchmark_gem.gem_name] ||= {}
-        benchmark_gem.benchmark_gem_size(gem_data)
-        benchmark_gem.benchmark_require(gem_data)
-        benchmark_gem.benchmark_client(gem_data)
+        benchmark_gem.benchmark_gem_size(gem_data, report_data['results'])
+        benchmark_gem.benchmark_require(gem_data, report_data['results'])
+        benchmark_gem.benchmark_client(gem_data, report_data['results'])
       end
     end
     puts 'Done benchmarking gem size/requires/client initialization'
@@ -42,13 +44,15 @@ namespace :benchmark do
     Benchmark::Gem.descendants.each do |benchmark_gem_klass|
       benchmark_gem = benchmark_gem_klass.new
       puts "\tBenchmarking #{benchmark_gem.gem_name}"
-      benchmark_gem.benchmark_operations(benchmark_data[benchmark_gem.gem_name])
+      benchmark_gem.benchmark_operations(benchmark_data[benchmark_gem.gem_name], report_data['results'])
     end
     puts 'Done benchmarking operations'
     puts "\n"
 
-    puts 'Benchmarking complete, writing out report to: benchmark_report.json'
-    File.write('benchmark_report.json', JSON.pretty_generate(report_data))
+    puts 'Benchmarking complete, writing out report to: benchmark_report.json, results.json'
+    FileUtils.mkdir_p('benchmark-results') unless File.directory?('benchmark-results')
+    File.write('benchmark-results/benchmark_report.json', JSON.pretty_generate(legacy_report_data))
+    File.write('benchmark-results/results.json', JSON.pretty_generate(report_data))
 
     puts 'TASK END: benchmark:run'
   end
@@ -67,7 +71,7 @@ namespace :benchmark do
     client.put_object(
       bucket: bucket,
       key: key,
-      body: File.read('benchmark_report.json')
+      body: File.read('benchmark-results/benchmark_report.json')
     )
     puts 'Upload complete'
 
@@ -81,7 +85,7 @@ namespace :benchmark do
     require 'aws-sdk-cloudwatch'
     require_relative 'benchmark/metrics'
 
-    report = JSON.parse(File.read('benchmark_report.json'))
+    report = JSON.load_file('benchmark-results/benchmark_report.json')
     ruby_version = report['ruby_version'].split('.').first(2).join('.')
     target = "#{report['ruby_engine']}-#{ruby_version}"
 
@@ -119,7 +123,7 @@ namespace :benchmark do
     require_relative 'benchmark/metrics'
 
     client = Aws::Lambda::Client.new
-    report = JSON.parse(File.read('benchmark_report.json'))
+    report = JSON.load_file('benchmark-results/benchmark_report.json')
     payload = {
       metric_namespace: Benchmark::Metrics.metric_namespace,
       report: report
